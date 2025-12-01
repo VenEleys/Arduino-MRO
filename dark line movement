@@ -1,0 +1,161 @@
+// Port 3 - upper
+#define PWM_PIN3 9
+#define IN1_PIN3 43
+#define IN2_PIN3 42
+#define EN_A3 3
+#define EN_B3 49
+
+// Port 1 - right
+#define PWM_PIN1 12
+#define IN1_PIN1 34
+#define IN2_PIN1 35
+#define EN_A1 18
+#define EN_B1 31
+  
+// Port 2 - left
+#define PWM_PIN2 8
+#define IN1_PIN2 37
+#define IN2_PIN2 36
+#define EN_A2 19
+#define EN_B2 38
+
+#define sensor1_PIN A11 
+#define sensor2_PIN A10
+#define sensor3_PIN A12
+#define sensor4_PIN A13
+
+const int moveSpeed = 100;
+const int rotateSpeed = 70;
+bool on_bar = false;
+int bars = 0;
+
+void setup() {
+  Serial.begin(9600);
+  Serial3.begin(115200);
+
+  pinMode(PWM_PIN1, OUTPUT);
+  pinMode(IN1_PIN1, OUTPUT);
+  pinMode(IN2_PIN1, OUTPUT);
+
+  pinMode(EN_A1, INPUT_PULLUP);
+  pinMode(EN_B1, INPUT_PULLUP);
+
+  pinMode(PWM_PIN2, OUTPUT);
+  pinMode(IN1_PIN2, OUTPUT);
+  pinMode(IN2_PIN2, OUTPUT);
+
+  pinMode(EN_A2, INPUT_PULLUP);
+  pinMode(EN_B2, INPUT_PULLUP);
+
+  pinMode(PWM_PIN3, OUTPUT);
+  pinMode(IN1_PIN3, OUTPUT);
+  pinMode(IN2_PIN3, OUTPUT);
+
+  pinMode(EN_A3, INPUT_PULLUP);
+  pinMode(EN_B3, INPUT_PULLUP);
+
+  stopMove();
+
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  pinMode(sensor1_PIN, OUTPUT);
+  pinMode(sensor2_PIN, OUTPUT);
+  pinMode(sensor3_PIN, OUTPUT);
+  pinMode(sensor4_PIN, OUTPUT);
+  Serial.println("Ready");
+
+//  digitalWrite(IN1_PIN3, 1); //IN1 - down, IN2 - up
+//  digitalWrite(IN2_PIN3, 0);
+//  analogWrite(PWM_PIN3, 50);
+//  delay(1000);
+//  digitalWrite(IN1_PIN3, 0);
+//  digitalWrite(IN2_PIN3, 0);
+//  analogWrite(PWM_PIN3, 0);
+}
+
+bool checkRotation() {
+  // 0 - black, 1 - white
+  int s1 = digitalRead(sensor1_PIN);
+  int s2 = digitalRead(sensor2_PIN); 
+  int s3 = digitalRead(sensor3_PIN);
+  int s4 = digitalRead(sensor4_PIN); 
+
+  String combination = String(s1)+String(s2)+String(s3)+String(s4);
+  Serial.println(combination);
+  Serial3.print(combination);
+  Serial3.print(" ");
+  Serial3.println(bars);
+  if (not s1 && s4) {
+    turnL(50);
+    return true;
+  }
+  if (s1 && not s4) {
+    turnR(50);
+    return true;
+  }
+  if (s1+s2+s3+s4==0) {
+    if (not on_bar) {
+      bars += 1;
+    }
+    on_bar = true;
+    return false;
+  }
+  on_bar = false;
+  return false;
+}
+
+void forward() {
+  digitalWrite(IN1_PIN1, HIGH);
+  digitalWrite(IN2_PIN1, LOW);
+  analogWrite(PWM_PIN1, moveSpeed);
+
+  digitalWrite(IN1_PIN2, LOW);
+  digitalWrite(IN2_PIN2, HIGH);
+  analogWrite(PWM_PIN2, moveSpeed);
+}
+void stopMove() {
+  digitalWrite(IN1_PIN1, LOW);
+  digitalWrite(IN2_PIN1, LOW);
+  analogWrite(PWM_PIN1, 0);
+
+  digitalWrite(IN1_PIN2, LOW);
+  digitalWrite(IN2_PIN2, LOW);
+  analogWrite(PWM_PIN2, 0);
+}
+
+void turnR(int duration) {
+  stopMove();
+  delay(10);
+  digitalWrite(IN1_PIN1, LOW);
+  digitalWrite(IN2_PIN1, HIGH);
+  analogWrite(PWM_PIN1, rotateSpeed);
+
+  digitalWrite(IN1_PIN2, LOW);
+  digitalWrite(IN2_PIN2, HIGH);
+  analogWrite(PWM_PIN2, rotateSpeed);
+
+  delay(duration);
+  stopMove();
+}
+
+
+void turnL(int duration) {
+  stopMove();
+  delay(10);
+  digitalWrite(IN1_PIN1, HIGH);
+  digitalWrite(IN2_PIN1, LOW);
+  analogWrite(PWM_PIN1, rotateSpeed);
+
+  digitalWrite(IN1_PIN2, HIGH);
+  digitalWrite(IN2_PIN2, LOW);
+  analogWrite(PWM_PIN2, rotateSpeed);
+
+  delay(duration);
+  stopMove();
+}
+
+void loop() {
+  if (checkRotation()) {stopMove(); return;}
+  forward();
+  delay(2);
+}
